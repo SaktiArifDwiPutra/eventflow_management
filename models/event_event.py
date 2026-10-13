@@ -1,4 +1,5 @@
-from odoo import fields, models
+from odoo import _, fields, models
+from odoo.exceptions import AccessError
 
 
 class EventEvent(models.Model):
@@ -21,10 +22,16 @@ class EventEvent(models.Model):
     approved_by = fields.Many2one('res.users', readonly=True, copy=False)
     approved_date = fields.Datetime(readonly=True, copy=False)
 
+    def _check_eventflow_group(self, group_xmlid):
+        if not self.env.user.has_group(group_xmlid):
+            raise AccessError(_("You do not have the rights to perform this action."))
+
     def action_submit(self):
+        self._check_eventflow_group('eventflow_management.group_eventflow_staff')
         self.write({'approval_state': 'submitted'})
 
     def action_approve(self):
+        self._check_eventflow_group('eventflow_management.group_eventflow_manager')
         self.write({
             'approval_state': 'approved',
             'approved_by': self.env.user.id,
@@ -32,9 +39,11 @@ class EventEvent(models.Model):
         })
 
     def action_reject(self):
+        self._check_eventflow_group('eventflow_management.group_eventflow_manager')
         self.write({'approval_state': 'rejected'})
 
     def action_reset_draft(self):
+        self._check_eventflow_group('eventflow_management.group_eventflow_manager')
         self.write({
             'approval_state': 'draft',
             'approved_by': False,
