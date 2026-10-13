@@ -1,5 +1,5 @@
 from odoo import _, fields, models
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, UserError
 
 
 class EventEvent(models.Model):
@@ -40,6 +40,8 @@ class EventEvent(models.Model):
 
     def action_reject(self):
         self._check_eventflow_group('eventflow_management.group_eventflow_manager')
+        if any(not event.rejection_reason for event in self):
+            raise UserError(_("Please fill in the rejection reason before rejecting."))
         self.write({'approval_state': 'rejected'})
 
     def action_reset_draft(self):
@@ -48,4 +50,5 @@ class EventEvent(models.Model):
             'approval_state': 'draft',
             'approved_by': False,
             'approved_date': False,
+            'rejection_reason': False,
         })

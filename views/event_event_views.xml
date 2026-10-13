@@ -22,7 +22,7 @@
                 <field name="approval_state" widget="statusbar"/>
             </xpath>
             <xpath expr="//sheet" position="inside">
-                <group invisible="approval_state != 'rejected'">
+                <group invisible="approval_state not in ('submitted', 'rejected')">
                     <field name="rejection_reason"/>
                 </group>
             </xpath>
