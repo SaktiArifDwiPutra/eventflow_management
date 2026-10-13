@@ -7,6 +7,7 @@
     'license': 'LGPL-3',
     'depends': ['base', 'event'],
     'data': [
+                'security/eventflow_security.xml',  
                 'views/event_event_views.xml',
             ],
     'application': True,

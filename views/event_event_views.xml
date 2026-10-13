@@ -11,8 +11,11 @@
                         invisible="approval_state != 'draft'"/>
                 <button name="action_approve" string="Approve" type="object"
                         class="btn-primary"
+                        groups="eventflow_management.group_eventflow_manager"
                         invisible="approval_state != 'submitted'"/>
                 <button name="action_reject" string="Reject" type="object"
+                        class="btn-danger"
+                        groups="eventflow_management.group_eventflow_manager"
                         invisible="approval_state != 'submitted'"/>
                 <button name="action_reset_draft" string="Reset to Draft" type="object"
                         invisible="approval_state not in ('approved', 'rejected')"/>
