@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_event_form_inherit_approval" model="ir.ui.view">
+        <field name="name">event.event.form.inherit.approval</field>
+        <field name="model">event.event</field>
+        <field name="inherit_id" ref="event.view_event_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_submit" string="Submit for Approval" type="object"
+                        class="btn-primary"
+                        invisible="approval_state != 'draft'"/>
+                <button name="action_approve" string="Approve" type="object"
+                        class="btn-primary"
+                        invisible="approval_state != 'submitted'"/>
+                <button name="action_reject" string="Reject" type="object"
+                        invisible="approval_state != 'submitted'"/>
+                <button name="action_reset_draft" string="Reset to Draft" type="object"
+                        invisible="approval_state not in ('approved', 'rejected')"/>
+                <field name="approval_state" widget="statusbar"/>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <group invisible="approval_state != 'rejected'">
+                    <field name="rejection_reason"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

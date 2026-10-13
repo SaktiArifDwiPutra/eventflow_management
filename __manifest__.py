@@ -6,7 +6,9 @@
     'author': 'Sakti',
     'license': 'LGPL-3',
     'depends': ['base', 'event'],
-    'data': [],
+    'data': [
+                'views/event_event_views.xml',
+            ],
     'application': True,
     'installable': True,
 }
