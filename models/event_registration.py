@@ -22,10 +22,30 @@ class EventRegistration(models.Model):
             ))
         return registrations
 
+    def _is_paid_for_checkin(self):
+        """Free or order-less registrations are fine; paid orders need paid invoices."""
+        self.ensure_one()
+        order = self.sale_order_id.sudo()
+        if not order or order.currency_id.is_zero(order.amount_total):
+            return True
+        invoices = order.invoice_ids.filtered(
+            lambda m: m.move_type == 'out_invoice' and m.state == 'posted'
+        )
+        return bool(invoices) and all(
+            m.payment_state in ('paid', 'in_payment') for m in invoices
+        )
+
     def write(self, vals):
         newly_done = self.browse()
         if vals.get('state') == 'done':
             newly_done = self.filtered(lambda r: r.state != 'done')
+            unpaid = newly_done.filtered(lambda r: not r._is_paid_for_checkin())
+            if unpaid:
+                raise UserError(_(
+                    "Check-in is only possible after the invoice is paid. "
+                    "Unpaid: %s",
+                    ", ".join(unpaid.mapped('name')),
+                ))
         res = super().write(vals)
         if newly_done:
             newly_done.write({'checked_in_by': self.env.user.id})
