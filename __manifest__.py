@@ -5,7 +5,7 @@
     'category': 'Marketing/Events',
     'author': 'Sakti',
     'license': 'LGPL-3',
-    'depends': ['base', 'event'],
+    'depends': ['base', 'event', 'event_sale'],
     'data': [
                 'security/eventflow_security.xml',  
                 'views/event_event_views.xml',

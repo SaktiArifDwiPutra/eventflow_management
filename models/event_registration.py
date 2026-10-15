@@ -11,15 +11,16 @@ class EventRegistration(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        event_ids = {vals['event_id'] for vals in vals_list if vals.get('event_id')}
-        events = self.env['event.event'].browse(event_ids)
-        not_approved = events.filtered(lambda e: e.approval_state != 'approved')
+        registrations = super().create(vals_list)
+        not_approved = registrations.event_id.filtered(
+            lambda e: e.approval_state != 'approved'
+        )
         if not_approved:
             raise UserError(_(
                 "Registration is only possible for approved events. Not approved: %s",
                 ", ".join(not_approved.mapped('name')),
             ))
-        return super().create(vals_list)
+        return registrations
 
     def write(self, vals):
         newly_done = self.browse()
