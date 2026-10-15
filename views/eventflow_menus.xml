@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_event_pending_approval" model="ir.actions.act_window">
+        <field name="name">Pending Approval</field>
+        <field name="res_model">event.event</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('approval_state', '=', 'submitted')]</field>
+    </record>
+
+    <menuitem id="menu_event_pending_approval"
+              name="Pending Approval"
+              parent="event.menu_event_event"
+              action="action_event_pending_approval"
+              sequence="5"
+              groups="eventflow_management.group_eventflow_manager"/>
+</odoo>
