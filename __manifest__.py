@@ -11,6 +11,7 @@
                 'views/event_event_views.xml',
                 'views/event_registration_views.xml',
                 'views/eventflow_menus.xml',
+                'views/eventflow_reports.xml',
             ],
     'application': True,
     'installable': True,

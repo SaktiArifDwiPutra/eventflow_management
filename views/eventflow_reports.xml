@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_event_approval_graph" model="ir.ui.view">
+        <field name="name">event.event.approval.graph</field>
+        <field name="model">event.event</field>
+        <field name="arch" type="xml">
+            <graph string="Events by Approval Status" type="bar">
+                <field name="approval_state"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_event_approval_pivot" model="ir.ui.view">
+        <field name="name">event.event.approval.pivot</field>
+        <field name="model">event.event</field>
+        <field name="arch" type="xml">
+            <pivot string="Events by Approval Status">
+                <field name="approval_state" type="row"/>
+                <field name="seats_taken" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_event_approval_overview" model="ir.actions.act_window">
+        <field name="name">Approval Overview</field>
+        <field name="res_model">event.event</field>
+        <field name="view_mode">graph,pivot,list,form</field>
+    </record>
+
+    <menuitem id="menu_event_approval_overview"
+              name="Approval Overview"
+              parent="event.menu_reporting_events"
+              action="action_event_approval_overview"
+              sequence="5"
+              groups="eventflow_management.group_eventflow_manager"/>
+</odoo>
