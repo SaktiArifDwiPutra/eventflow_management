@@ -33,4 +33,22 @@
             </xpath>
         </field>
     </record>
+        <record id="view_event_search_inherit_approval" model="ir.ui.view">
+        <field name="name">event.event.search.inherit.approval</field>
+        <field name="model">event.event</field>
+        <field name="inherit_id" ref="event.view_event_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='myevents']" position="before">
+                <filter string="Pending Approval" name="filter_pending_approval"
+                        domain="[('approval_state', '=', 'submitted')]"/>
+                <filter string="Approved" name="filter_approved"
+                        domain="[('approval_state', '=', 'approved')]"/>
+                <separator/>
+            </xpath>
+            <xpath expr="//filter[@name='stage_id']" position="after">
+                <filter string="Approval Status" name="group_approval_state"
+                        context="{'group_by': 'approval_state'}"/>
+            </xpath>
+        </field>
+    </record>
 </odoo>
