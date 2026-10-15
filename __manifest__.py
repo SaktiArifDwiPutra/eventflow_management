@@ -9,6 +9,7 @@
     'data': [
                 'security/eventflow_security.xml',  
                 'views/event_event_views.xml',
+                'views/event_registration_views.xml',
             ],
     'application': True,
     'installable': True,
