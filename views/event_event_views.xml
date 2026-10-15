@@ -51,4 +51,19 @@
             </xpath>
         </field>
     </record>
+    <record id="view_event_list_inherit_approval" model="ir.ui.view">
+        <field name="name">event.event.list.inherit.approval</field>
+        <field name="model">event.event</field>
+        <field name="inherit_id" ref="event.view_event_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='stage_id']" position="after">
+                <field name="approval_state" widget="badge"
+                       decoration-success="approval_state == 'approved'"
+                       decoration-info="approval_state == 'submitted'"
+                       decoration-danger="approval_state == 'rejected'"/>
+                <field name="seats_taken" string="Participants"/>
+                <field name="seats_used" string="Attended"/>
+            </xpath>
+        </field>
+    </record>
 </odoo>
