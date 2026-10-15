@@ -1,4 +1,4 @@
-from odoo import _, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError
 
 APPROVAL_FIELDS = {'approval_state', 'approved_by', 'approved_date'}
@@ -23,6 +23,16 @@ class EventEvent(models.Model):
     rejection_reason = fields.Text(copy=False)
     approved_by = fields.Many2one('res.users', readonly=True, copy=False)
     approved_date = fields.Datetime(readonly=True, copy=False)
+    attendance_rate = fields.Float(
+        string='Attendance Rate', compute='_compute_attendance_rate',
+    )
+
+    @api.depends('seats_used', 'seats_taken')
+    def _compute_attendance_rate(self):
+        for event in self:
+            event.attendance_rate = (
+                event.seats_used / event.seats_taken if event.seats_taken else 0.0
+            )
 
     def write(self, vals):
         if APPROVAL_FIELDS & set(vals) and not self.env.context.get('eventflow_action'):

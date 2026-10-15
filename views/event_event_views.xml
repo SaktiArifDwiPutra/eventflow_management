@@ -25,6 +25,11 @@
                 <group invisible="approval_state not in ('submitted', 'rejected')">
                     <field name="rejection_reason"/>
                 </group>
+                <group string="Attendance" invisible="approval_state != 'approved'">
+                    <field name="seats_taken"/>
+                    <field name="seats_used"/>
+                    <field name="attendance_rate" widget="percentage"/>
+                </group>
             </xpath>
         </field>
     </record>
