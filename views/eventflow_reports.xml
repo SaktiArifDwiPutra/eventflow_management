@@ -33,4 +33,41 @@
               action="action_event_approval_overview"
               sequence="5"
               groups="eventflow_management.group_eventflow_manager"/>
+
+    <record id="view_registration_attendance_pivot" model="ir.ui.view">
+        <field name="name">event.registration.attendance.pivot</field>
+        <field name="model">event.registration</field>
+        <field name="arch" type="xml">
+            <pivot string="Attendance by Event">
+                <field name="event_id" type="row"/>
+                <field name="state" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_registration_attendance_graph" model="ir.ui.view">
+        <field name="name">event.registration.attendance.graph</field>
+        <field name="model">event.registration</field>
+        <field name="arch" type="xml">
+            <graph string="Attendance by Event" type="bar">
+                <field name="event_id"/>
+                <field name="state"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_event_attendance_report" model="ir.actions.act_window">
+        <field name="name">Attendance Report</field>
+        <field name="res_model">event.registration</field>
+        <field name="view_mode">pivot,graph,list,form</field>
+        <field name="domain">[('state', 'in', ['open', 'done'])]</field>
+    </record>
+
+    <menuitem id="menu_event_attendance_report"
+              name="Attendance Report"
+              parent="event.menu_reporting_events"
+              action="action_event_attendance_report"
+              sequence="10"
+              groups="eventflow_management.group_eventflow_manager"/>
+
 </odoo>
