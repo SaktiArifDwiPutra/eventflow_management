@@ -35,6 +35,15 @@
                     <field name="attendance_rate" widget="percentage"/>
                 </group>
             </xpath>
+            <xpath expr="//field[@name='date_begin']" position="attributes">
+                <attribute name="readonly">approval_state == 'approved'</attribute>
+            </xpath>
+            <xpath expr="//field[@name='seats_limited']" position="attributes">
+                <attribute name="readonly">approval_state == 'approved'</attribute>
+            </xpath>
+            <xpath expr="//field[@name='seats_max']" position="attributes">
+                <attribute name="readonly">approval_state == 'approved'</attribute>
+            </xpath>
         </field>
     </record>
         <record id="view_event_search_inherit_approval" model="ir.ui.view">
