@@ -119,4 +119,56 @@
               action="action_event_dashboard"
               sequence="1"
               groups="eventflow_management.group_eventflow_staff"/>
+
+    <record id="view_event_revenue_pivot" model="ir.ui.view">
+        <field name="name">sale.order.line.event.revenue.pivot</field>
+        <field name="model">sale.order.line</field>
+        <field name="arch" type="xml">
+            <pivot string="Revenue by Event">
+                <field name="event_id" type="row"/>
+                <field name="price_subtotal" type="measure"/>
+                <field name="untaxed_amount_invoiced" type="measure"/>
+                <field name="untaxed_amount_to_invoice" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_event_revenue_graph" model="ir.ui.view">
+        <field name="name">sale.order.line.event.revenue.graph</field>
+        <field name="model">sale.order.line</field>
+        <field name="arch" type="xml">
+            <graph string="Revenue by Event" type="bar">
+                <field name="event_id"/>
+                <field name="price_subtotal" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_event_revenue_report" model="ir.actions.act_window">
+        <field name="name">Revenue Report</field>
+        <field name="res_model">sale.order.line</field>
+        <field name="view_mode">pivot,graph</field>
+        <field name="domain">[('event_id', '!=', False), ('state', '=', 'sale')]</field>
+    </record>
+
+    <record id="action_event_revenue_report_pivot" model="ir.actions.act_window.view">
+        <field name="sequence">1</field>
+        <field name="view_mode">pivot</field>
+        <field name="view_id" ref="view_event_revenue_pivot"/>
+        <field name="act_window_id" ref="action_event_revenue_report"/>
+    </record>
+
+    <record id="action_event_revenue_report_graph" model="ir.actions.act_window.view">
+        <field name="sequence">2</field>
+        <field name="view_mode">graph</field>
+        <field name="view_id" ref="view_event_revenue_graph"/>
+        <field name="act_window_id" ref="action_event_revenue_report"/>
+    </record>
+
+    <menuitem id="menu_event_revenue_report"
+              name="Revenue Report"
+              parent="event.menu_reporting_events"
+              action="action_event_revenue_report"
+              sequence="15"
+              groups="eventflow_management.group_eventflow_manager"/>
 </odoo>
