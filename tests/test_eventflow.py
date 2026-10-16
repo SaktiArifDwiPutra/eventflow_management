@@ -63,3 +63,17 @@ class TestEventFlow(TransactionCase):
         self.event.rejection_reason = 'Budget not approved'
         self.event.with_user(self.manager).action_reject()
         self.assertEqual(self.event.approval_state, 'rejected')
+
+    def test_staff_can_reset_rejected_but_not_approved(self):
+        self.event.with_user(self.staff).action_submit()
+        self.event.rejection_reason = 'Needs more detail'
+        self.event.with_user(self.manager).action_reject()
+        self.event.with_user(self.staff).action_reset_draft()
+        self.assertEqual(self.event.approval_state, 'draft')
+
+        self.event.with_user(self.staff).action_submit()
+        self.event.with_user(self.manager).action_approve()
+        with self.assertRaises(AccessError):
+            self.event.with_user(self.staff).action_reset_draft()
+        self.event.with_user(self.manager).action_reset_draft()
+        self.assertEqual(self.event.approval_state, 'draft')

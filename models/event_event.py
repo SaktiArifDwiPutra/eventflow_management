@@ -75,7 +75,10 @@ class EventEvent(models.Model):
         self.with_context(eventflow_action=True).write({'approval_state': 'rejected'})
 
     def action_reset_draft(self):
-        self._check_eventflow_group('eventflow_management.group_eventflow_manager')
+        self._check_eventflow_group('eventflow_management.group_eventflow_staff')
+        is_manager = self.env.user.has_group('eventflow_management.group_eventflow_manager')
+        if not is_manager and any(event.approval_state != 'rejected' for event in self):
+            raise AccessError(_("Only Event Managers can reset events that are not rejected."))
         self.with_context(eventflow_action=True).write({
             'approval_state': 'draft',
             'approved_by': False,
