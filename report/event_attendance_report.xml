@@ -17,39 +17,54 @@
                 <t t-set="event" t-value="event._set_tz_context()"/>
                 <t t-set="registrations" t-value="event._get_attendance_list_registrations()"/>
                 <t t-call="web.basic_layout">
-                    <div class="page">
+                    <div class="page ef-att">
+                        <style>
+                            .ef-att { font-size: 11px; color: #222; }
+                            .ef-att h2 { font-size: 20px; margin: 0 0 4px 0; }
+                            .ef-att .ef-meta { color: #555; margin: 0 0 14px 0; line-height: 1.5; }
+                            .ef-att table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+                            .ef-att thead { display: table-header-group; }
+                            .ef-att tr { page-break-inside: avoid; }
+                            .ef-att th { background: #eeeeee; border: 1px solid #888; padding: 6px 5px; text-align: left; font-size: 11px; }
+                            .ef-att td { border: 1px solid #888; padding: 8px 5px; height: 34px; vertical-align: middle; word-wrap: break-word; }
+                            .ef-att .ef-email { word-break: break-all; }
+                            .ef-att .ef-empty { color: #777; margin-top: 12px; }
+                        </style>
+
                         <h2 t-field="event.name"/>
-                        <p>
+                        <div class="ef-meta">
                             <span t-field="event.date_begin" t-options='{"widget": "datetime"}'/>
                             to
                             <span t-field="event.date_end" t-options='{"widget": "datetime"}'/>
                             <br/>
                             Registered: <span t-field="event.seats_taken"/>
-                            · Attended: <span t-field="event.seats_used"/>
-                        </p>
-                        <table class="table table-bordered table-sm">
+                            &#160;|&#160;
+                            Attended: <span t-field="event.seats_used"/>
+                        </div>
+
+                        <table>
                             <thead>
                                 <tr>
-                                    <th style="width: 6%;">#</th>
-                                    <th style="width: 26%;">Name</th>
-                                    <th style="width: 24%;">Email</th>
-                                    <th style="width: 14%;">Ticket</th>
+                                    <th style="width: 5%;">#</th>
+                                    <th style="width: 25%;">Name</th>
+                                    <th style="width: 27%;">Email</th>
+                                    <th style="width: 13%;">Ticket</th>
                                     <th style="width: 10%;">Status</th>
                                     <th style="width: 20%;">Signature</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr t-foreach="registrations" t-as="reg" style="height: 40px;">
+                                <tr t-foreach="registrations" t-as="reg">
                                     <td><t t-esc="reg_index + 1"/></td>
                                     <td><span t-field="reg.name"/></td>
-                                    <td><span t-field="reg.email"/></td>
+                                    <td class="ef-email"><span t-field="reg.email"/></td>
                                     <td><span t-if="reg.event_ticket_id" t-field="reg.event_ticket_id.name"/></td>
                                     <td><span t-field="reg.state"/></td>
                                     <td></td>
                                 </tr>
                             </tbody>
                         </table>
-                        <p t-if="not registrations" class="text-muted">No participants registered.</p>
+                        <p t-if="not registrations" class="ef-empty">No participants registered.</p>
                     </div>
                 </t>
             </t>
