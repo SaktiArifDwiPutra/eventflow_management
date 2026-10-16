@@ -189,3 +189,19 @@ class TestEventFlow(TransactionCase):
         })
         running_reg.write({'state': 'done'})
         self.assertEqual(running_reg.state, 'done')
+
+    def test_attendance_list_registrations(self):
+        self.event.with_context(eventflow_action=True).write(
+            {'approval_state': 'approved'}
+        )
+        Registration = self.env['event.registration']
+        vals = {'event_id': self.event.id}
+        zed = Registration.create(dict(vals, name='Zed', email='zed@example.com'))
+        Registration.create(dict(vals, name='Amy', email='amy@example.com'))
+        cancelled = Registration.create(dict(vals, name='Cat', email='cat@example.com'))
+        cancelled.write({'state': 'cancel'})
+
+        listed = self.event._get_attendance_list_registrations()
+        self.assertEqual(listed.mapped('name'), ['Amy', 'Zed'])
+        self.assertNotIn(cancelled, listed)
+        self.assertIn(zed, listed)

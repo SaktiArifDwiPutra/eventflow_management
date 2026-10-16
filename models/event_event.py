@@ -49,6 +49,12 @@ class EventEvent(models.Model):
             rate = attended / taken if taken else 0.0
             event.attendance_rate = rate
             event.attendance_percent = rate * 100
+            
+    def _get_attendance_list_registrations(self):
+        self.ensure_one()
+        return self.registration_ids.filtered(
+            lambda r: r.state in ('open', 'done')
+        ).sorted('name')
 
     def write(self, vals):
         if not self.env.context.get('eventflow_action'):

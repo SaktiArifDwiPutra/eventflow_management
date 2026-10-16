@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_event_attendance_list" model="ir.actions.report">
+        <field name="name">Attendance List</field>
+        <field name="model">event.event</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">eventflow_management.report_event_attendance_list</field>
+        <field name="report_file">eventflow_management.report_event_attendance_list</field>
+        <field name="print_report_name">'Attendance List - %s' % (object.name or 'Event').replace('/','')</field>
+        <field name="binding_model_id" ref="event.model_event_event"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_event_attendance_list">
+        <t t-foreach="docs" t-as="event">
+            <t t-call="web.html_container">
+                <t t-set="event" t-value="event._set_tz_context()"/>
+                <t t-set="registrations" t-value="event._get_attendance_list_registrations()"/>
+                <t t-call="web.basic_layout">
+                    <div class="page">
+                        <h2 t-field="event.name"/>
+                        <p>
+                            <span t-field="event.date_begin" t-options='{"widget": "datetime"}'/>
+                            to
+                            <span t-field="event.date_end" t-options='{"widget": "datetime"}'/>
+                            <br/>
+                            Registered: <span t-field="event.seats_taken"/>
+                            · Attended: <span t-field="event.seats_used"/>
+                        </p>
+                        <table class="table table-bordered table-sm">
+                            <thead>
+                                <tr>
+                                    <th style="width: 6%;">#</th>
+                                    <th style="width: 26%;">Name</th>
+                                    <th style="width: 24%;">Email</th>
+                                    <th style="width: 14%;">Ticket</th>
+                                    <th style="width: 10%;">Status</th>
+                                    <th style="width: 20%;">Signature</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="registrations" t-as="reg" style="height: 40px;">
+                                    <td><t t-esc="reg_index + 1"/></td>
+                                    <td><span t-field="reg.name"/></td>
+                                    <td><span t-field="reg.email"/></td>
+                                    <td><span t-if="reg.event_ticket_id" t-field="reg.event_ticket_id.name"/></td>
+                                    <td><span t-field="reg.state"/></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p t-if="not registrations" class="text-muted">No participants registered.</p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

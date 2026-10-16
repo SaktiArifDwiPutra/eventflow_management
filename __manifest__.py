@@ -13,6 +13,7 @@
                 'views/event_registration_views.xml',
                 'views/eventflow_menus.xml',
                 'views/eventflow_reports.xml',
+                'report/event_attendance_report.xml',
             ],
     'application': True,
     'installable': True,
