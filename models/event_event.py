@@ -2,6 +2,7 @@ from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError
 
 APPROVAL_FIELDS = {'approval_state', 'approved_by', 'approved_date'}
+LOCKED_FIELDS = {'name', 'date_begin', 'date_end', 'seats_max', 'seats_limited'}
 
 
 class EventEvent(models.Model):
@@ -48,8 +49,16 @@ class EventEvent(models.Model):
             event.attendance_percent = rate * 100
 
     def write(self, vals):
-        if APPROVAL_FIELDS & set(vals) and not self.env.context.get('eventflow_action'):
-            raise UserError(_("Approval fields can only be changed using the workflow buttons."))
+        if not self.env.context.get('eventflow_action'):
+            if APPROVAL_FIELDS & set(vals):
+                raise UserError(_("Approval fields can only be changed using the workflow buttons."))
+            if LOCKED_FIELDS & set(vals) and any(
+                event.approval_state == 'approved' for event in self
+            ):
+                raise UserError(_(
+                    "This event is approved, so its name, dates and seat limit are locked. "
+                    "Ask a manager to reset it to draft before changing them."
+                ))
         return super().write(vals)
 
     def _check_eventflow_group(self, group_xmlid):

@@ -77,3 +77,15 @@ class TestEventFlow(TransactionCase):
             self.event.with_user(self.staff).action_reset_draft()
         self.event.with_user(self.manager).action_reset_draft()
         self.assertEqual(self.event.approval_state, 'draft')
+
+    def test_approved_event_core_fields_locked(self):
+        self.event.write({'name': 'Renamed while draft'})
+        self.event.with_user(self.staff).action_submit()
+        self.event.with_user(self.manager).action_approve()
+        with self.assertRaises(UserError):
+            self.event.write({'name': 'Renamed after approval'})
+        with self.assertRaises(UserError):
+            self.event.write({'seats_max': 99})
+        self.event.with_user(self.manager).action_reset_draft()
+        self.event.write({'name': 'Renamed after reset'})
+        self.assertEqual(self.event.name, 'Renamed after reset')
