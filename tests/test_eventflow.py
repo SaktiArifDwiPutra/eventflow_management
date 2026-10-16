@@ -258,3 +258,21 @@ class TestEventFlow(TransactionCase):
 
         Event._cron_remind_missing_attendance()
         self.assertEqual(len(manager_activities(with_regs)), 1)
+
+    def test_publication_follows_approval(self):
+        self.assertFalse(self.event.is_published)
+        with self.assertRaises(UserError):
+            self.event.write({'is_published': True})
+
+        self.event.with_user(self.staff).action_submit()
+        self.event.with_user(self.manager).action_approve()
+        self.assertTrue(self.event.is_published)
+
+        self.event.with_user(self.manager).action_reset_draft()
+        self.assertFalse(self.event.is_published)
+
+        self.event.with_user(self.staff).action_submit()
+        self.event.with_user(self.manager).action_approve()
+        self.event.cancel_reason = 'Venue unavailable'
+        self.event.with_user(self.manager).action_cancel_event()
+        self.assertFalse(self.event.is_published)

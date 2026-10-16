@@ -1,4 +1,5 @@
 from datetime import timedelta
+
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError
 
@@ -88,6 +89,13 @@ class EventEvent(models.Model):
                 )
             event.attendance_reminder_sent = True
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        # New events always start as draft, so they must not be public yet.
+        for vals in vals_list:
+            vals['is_published'] = False
+        return super().create(vals_list)
+
     def write(self, vals):
         if not self.env.context.get('eventflow_action'):
             if APPROVAL_FIELDS & set(vals):
@@ -99,6 +107,10 @@ class EventEvent(models.Model):
                     "This event is approved, so its name, dates and seat limit are locked. "
                     "Ask a manager to reset it to draft before changing them."
                 ))
+            if vals.get('is_published') and any(
+                event.approval_state != 'approved' for event in self
+            ):
+                raise UserError(_("Only approved events can be published on the website."))
         return super().write(vals)
 
     def _check_eventflow_group(self, group_xmlid):
@@ -149,6 +161,7 @@ class EventEvent(models.Model):
             'approval_state': 'approved',
             'approved_by': self.env.user.id,
             'approved_date': fields.Datetime.now(),
+            'is_published': True,
         })
         self._close_approval_activities(_("Approved"))
         for event in self:
@@ -160,7 +173,10 @@ class EventEvent(models.Model):
         self._check_eventflow_group('eventflow_management.group_eventflow_manager')
         if any(not event.rejection_reason for event in self):
             raise UserError(_("Please fill in the rejection reason before rejecting."))
-        self.with_context(eventflow_action=True).write({'approval_state': 'rejected'})
+        self.with_context(eventflow_action=True).write({
+            'approval_state': 'rejected',
+            'is_published': False,
+        })
         self._close_approval_activities(_("Rejected"))
         for event in self:
             event._notify_submitter(_(
@@ -175,7 +191,10 @@ class EventEvent(models.Model):
             raise UserError(_("Only approved events can be cancelled."))
         if any(not event.cancel_reason for event in self):
             raise UserError(_("Please fill in the cancellation reason before cancelling."))
-        self.with_context(eventflow_action=True).write({'approval_state': 'cancelled'})
+        self.with_context(eventflow_action=True).write({
+            'approval_state': 'cancelled',
+            'is_published': False,
+        })
         for event in self:
             event.registration_ids.filtered(
                 lambda r: r.state in ('draft', 'open')
@@ -198,4 +217,5 @@ class EventEvent(models.Model):
             'approved_by': False,
             'approved_date': False,
             'rejection_reason': False,
+            'is_published': False,
         })
