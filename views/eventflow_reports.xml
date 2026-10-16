@@ -75,16 +75,30 @@
         <field name="model">event.event</field>
         <field name="arch" type="xml">
             <kanban create="false" records_draggable="false">
+                <field name="attendance_percent"/>
                 <templates>
                     <t t-name="card">
-                        <field name="name" class="fw-bold fs-5"/>
-                        <field name="date_begin" class="text-muted"/>
-                        <div class="mt-2">
-                            Participants: <field name="seats_taken"/>
-                            · Attended: <field name="seats_used"/>
+                        <field name="name" class="fw-bold fs-5 d-block"/>
+                        <field name="date_begin" class="text-muted small d-block mb-3"/>
+                        <div class="d-flex justify-content-between text-center">
+                            <div>
+                                <div class="fs-4 fw-bold"><field name="seats_taken"/></div>
+                                <div class="text-muted small">Participants</div>
+                            </div>
+                            <div>
+                                <div class="fs-4 fw-bold"><field name="seats_used"/></div>
+                                <div class="text-muted small">Attended</div>
+                            </div>
+                            <div>
+                                <div class="fs-4 fw-bold">
+                                    <t t-esc="Math.round(record.attendance_percent.raw_value)"/>%
+                                </div>
+                                <div class="text-muted small">Attendance</div>
+                            </div>
                         </div>
-                        <div>
-                            Attendance: <field name="attendance_percent"/>%
+                        <div class="progress mt-3" style="height: 6px;">
+                            <div class="progress-bar bg-success"
+                                 t-attf-style="width: #{record.attendance_percent.raw_value}%;"/>
                         </div>
                     </t>
                 </templates>
