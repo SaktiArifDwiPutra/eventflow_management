@@ -11,11 +11,6 @@ class TestEventFlow(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.event = cls.env['event.event'].create({
-            'name': 'Test Event',
-            'date_begin': fields.Datetime.now() + timedelta(days=1),
-            'date_end': fields.Datetime.now() + timedelta(days=2),
-        })
         cls.staff = new_test_user(
             cls.env, login='ef_staff',
             groups='base.group_user,eventflow_management.group_eventflow_staff',
@@ -24,6 +19,11 @@ class TestEventFlow(TransactionCase):
             cls.env, login='ef_manager',
             groups='base.group_user,eventflow_management.group_eventflow_manager',
         )
+        cls.event = cls.env['event.event'].with_user(cls.staff).create({
+            'name': 'Test Event',
+            'date_begin': fields.Datetime.now() + timedelta(days=1),
+            'date_end': fields.Datetime.now() + timedelta(days=2),
+        }).sudo()
 
     def _registration_vals(self):
         return {
@@ -119,3 +119,22 @@ class TestEventFlow(TransactionCase):
             lambda m: self.staff.partner_id in m.partner_ids
         )
         self.assertTrue(any('approved' in (m.body or '') for m in notified))
+
+    def test_staff_visibility_rule(self):
+        other = self.env['event.event'].create({
+            'name': 'Other Event',
+            'date_begin': fields.Datetime.now() + timedelta(days=1),
+            'date_end': fields.Datetime.now() + timedelta(days=2),
+        })
+
+        domain = [('id', 'in', [self.event.id, other.id])]
+        Event = self.env['event.event']
+        self.assertEqual(Event.with_user(self.staff).search(domain), self.event)
+        other.with_context(eventflow_action=True).write({'approval_state': 'approved'})
+        self.assertEqual(
+            Event.with_user(self.staff).search(domain), self.event | other
+        )
+        
+        self.assertEqual(
+            Event.with_user(self.manager).search(domain), self.event | other
+        )
