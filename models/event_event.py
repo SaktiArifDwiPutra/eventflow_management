@@ -24,15 +24,19 @@ class EventEvent(models.Model):
     approved_by = fields.Many2one('res.users', readonly=True, copy=False)
     approved_date = fields.Datetime(readonly=True, copy=False)
     attendance_rate = fields.Float(
-        string='Attendance Rate', compute='_compute_attendance_rate',
+        string='Attendance Rate',
+        compute='_compute_attendance_rate',
+        store=True,
+        aggregator='avg',
     )
 
-    @api.depends('seats_used', 'seats_taken')
+    @api.depends('registration_ids.state')
     def _compute_attendance_rate(self):
         for event in self:
-            event.attendance_rate = (
-                event.seats_used / event.seats_taken if event.seats_taken else 0.0
-            )
+            registrations = event.registration_ids
+            taken = len(registrations.filtered(lambda r: r.state in ('open', 'done')))
+            attended = len(registrations.filtered(lambda r: r.state == 'done'))
+            event.attendance_rate = attended / taken if taken else 0.0
 
     def write(self, vals):
         if APPROVAL_FIELDS & set(vals) and not self.env.context.get('eventflow_action'):

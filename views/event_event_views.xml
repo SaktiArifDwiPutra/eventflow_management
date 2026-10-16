@@ -63,6 +63,7 @@
                        decoration-danger="approval_state == 'rejected'"/>
                 <field name="seats_taken" string="Participants"/>
                 <field name="seats_used" string="Attended"/>
+                <field name="attendance_rate" widget="percentage" optional="show"/>
             </xpath>
         </field>
     </record>
