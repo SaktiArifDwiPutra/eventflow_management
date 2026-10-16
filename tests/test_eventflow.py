@@ -231,3 +231,30 @@ class TestEventFlow(TransactionCase):
             })
         with self.assertRaises(UserError):
             self.event.with_user(self.manager).action_reset_draft()
+
+    def test_cron_reminds_managers_about_missing_attendance(self):
+        Event = self.env['event.event']
+        ended_vals = {
+            'date_begin': fields.Datetime.now() - timedelta(days=2),
+            'date_end': fields.Datetime.now() - timedelta(days=1),
+        }
+        with_regs = Event.create(dict(ended_vals, name='Ended With Registrations'))
+        empty = Event.create(dict(ended_vals, name='Ended Without Registrations'))
+        for event in (with_regs, empty):
+            event.with_context(eventflow_action=True).write({'approval_state': 'approved'})
+        self.env['event.registration'].create({
+            'event_id': with_regs.id, 'name': 'Alice', 'email': 'alice@example.com',
+        })
+
+        def manager_activities(event):
+            return event.activity_ids.filtered(
+                lambda a: a.user_id == self.manager
+                and a.summary == 'No attendance recorded'
+            )
+
+        Event._cron_remind_missing_attendance()
+        self.assertEqual(len(manager_activities(with_regs)), 1)
+        self.assertFalse(manager_activities(empty))
+
+        Event._cron_remind_missing_attendance()
+        self.assertEqual(len(manager_activities(with_regs)), 1)

@@ -1,9 +1,11 @@
+from datetime import timedelta
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError
 
 APPROVAL_FIELDS = {'approval_state', 'approved_by', 'approved_date', 'submitted_by'}
 LOCKED_FIELDS = {'name', 'date_begin', 'date_end', 'seats_max', 'seats_limited'}
 APPROVAL_ACTIVITY_SUMMARY = 'Approval needed'
+MISSING_ATTENDANCE_SUMMARY = 'No attendance recorded'
 
 
 class EventEvent(models.Model):
@@ -25,6 +27,7 @@ class EventEvent(models.Model):
     )
     rejection_reason = fields.Text(copy=False)
     cancel_reason = fields.Text(copy=False)
+    attendance_reminder_sent = fields.Boolean(readonly=True, copy=False)
     submitted_by = fields.Many2one('res.users', readonly=True, copy=False)
     approved_by = fields.Many2one('res.users', readonly=True, copy=False)
     approved_date = fields.Datetime(readonly=True, copy=False)
@@ -57,6 +60,33 @@ class EventEvent(models.Model):
         return self.registration_ids.filtered(
             lambda r: r.state in ('open', 'done')
         ).sorted('name')
+
+    @api.model
+    def _cron_remind_missing_attendance(self):
+        now = fields.Datetime.now()
+        events = self.search([
+            ('approval_state', '=', 'approved'),
+            ('attendance_reminder_sent', '=', False),
+            ('date_end', '<', now),
+            ('date_end', '>=', now - timedelta(days=7)),
+        ])
+        managers = self._eventflow_managers()
+        if not managers:
+            return
+        for event in events:
+            registrations = event.registration_ids
+            if not registrations.filtered(lambda r: r.state in ('open', 'done')):
+                continue
+            if registrations.filtered(lambda r: r.state == 'done'):
+                continue
+            for manager in managers:
+                event.activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    user_id=manager.id,
+                    summary=MISSING_ATTENDANCE_SUMMARY,
+                    note=_("This event has ended but no participant was marked as attended."),
+                )
+            event.attendance_reminder_sent = True
 
     def write(self, vals):
         if not self.env.context.get('eventflow_action'):
