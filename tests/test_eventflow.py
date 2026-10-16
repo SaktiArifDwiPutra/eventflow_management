@@ -134,7 +134,32 @@ class TestEventFlow(TransactionCase):
         self.assertEqual(
             Event.with_user(self.staff).search(domain), self.event | other
         )
-        
+
         self.assertEqual(
             Event.with_user(self.manager).search(domain), self.event | other
+        )
+
+    def test_staff_registration_visibility_rule(self):
+        Registration = self.env['event.registration']
+        other = self.env['event.event'].create({
+            'name': 'Other Event',
+            'date_begin': fields.Datetime.now() + timedelta(days=1),
+            'date_end': fields.Datetime.now() + timedelta(days=2),
+        })
+        for event in (self.event, other):
+            event.with_context(eventflow_action=True).write(
+                {'approval_state': 'approved'}
+            )
+        reg_own = Registration.create({
+            'event_id': self.event.id, 'name': 'Alice', 'email': 'alice@example.com',
+        })
+        reg_other = Registration.create({
+            'event_id': other.id, 'name': 'Bob', 'email': 'bob@example.com',
+        })
+        other.with_context(eventflow_action=True).write({'approval_state': 'draft'})
+
+        domain = [('id', 'in', [reg_own.id, reg_other.id])]
+        self.assertEqual(Registration.with_user(self.staff).search(domain), reg_own)
+        self.assertEqual(
+            Registration.with_user(self.manager).search(domain), reg_own | reg_other
         )
