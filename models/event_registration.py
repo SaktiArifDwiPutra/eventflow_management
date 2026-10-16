@@ -1,3 +1,7 @@
+from datetime import datetime, time
+
+import pytz
+
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError
 
@@ -22,6 +26,19 @@ class EventRegistration(models.Model):
             ))
         return registrations
 
+    def _is_checkin_open(self):
+        """Check-in is open from the start of the event's first day until it ends."""
+        self.ensure_one()
+        event = self.event_id
+        tz = pytz.timezone(event.date_tz or 'UTC')
+        local_begin = pytz.utc.localize(event.date_begin).astimezone(tz)
+        day_start = (
+            tz.localize(datetime.combine(local_begin.date(), time.min))
+            .astimezone(pytz.utc)
+            .replace(tzinfo=None)
+        )
+        return day_start <= fields.Datetime.now() <= event.date_end
+
     def _is_paid_for_checkin(self):
         """Free or order-less registrations are fine; paid orders need paid invoices."""
         self.ensure_one()
@@ -39,6 +56,13 @@ class EventRegistration(models.Model):
         newly_done = self.browse()
         if vals.get('state') == 'done':
             newly_done = self.filtered(lambda r: r.state != 'done')
+            closed = newly_done.filtered(lambda r: not r._is_checkin_open())
+            if closed:
+                raise UserError(_(
+                    "Check-in is only possible from the first day of the event "
+                    "until it ends. Events: %s",
+                    ", ".join(closed.event_id.mapped('name')),
+                ))
             unpaid = newly_done.filtered(lambda r: not r._is_paid_for_checkin())
             if unpaid:
                 raise UserError(_(

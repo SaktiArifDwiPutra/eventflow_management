@@ -163,3 +163,29 @@ class TestEventFlow(TransactionCase):
         self.assertEqual(
             Registration.with_user(self.manager).search(domain), reg_own | reg_other
         )
+
+    def test_checkin_only_while_event_is_running(self):
+        Registration = self.env['event.registration']
+
+        self.event.with_context(eventflow_action=True).write(
+            {'approval_state': 'approved'}
+        )
+        future_reg = Registration.create({
+            'event_id': self.event.id, 'name': 'Alice', 'email': 'alice@example.com',
+        })
+        with self.assertRaises(UserError):
+            future_reg.write({'state': 'done'})
+
+        running = self.env['event.event'].create({
+            'name': 'Running Event',
+            'date_begin': fields.Datetime.now() - timedelta(hours=1),
+            'date_end': fields.Datetime.now() + timedelta(hours=1),
+        })
+        running.with_context(eventflow_action=True).write(
+            {'approval_state': 'approved'}
+        )
+        running_reg = Registration.create({
+            'event_id': running.id, 'name': 'Bob', 'email': 'bob@example.com',
+        })
+        running_reg.write({'state': 'done'})
+        self.assertEqual(running_reg.state, 'done')
