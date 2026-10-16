@@ -23,11 +23,19 @@
                 <button name="action_reset_draft" string="Reset to Draft" type="object"
                         groups="eventflow_management.group_eventflow_manager"
                         invisible="approval_state != 'approved'"/>
+                <button name="action_cancel_event" string="Cancel Event" type="object"
+                        groups="eventflow_management.group_eventflow_manager"
+                        confirm="Cancel this event and all of its pending registrations?"
+                        invisible="approval_state != 'approved'"/>
                 <field name="approval_state" widget="statusbar"/>
             </xpath>
             <xpath expr="//sheet" position="inside">
                 <group invisible="approval_state not in ('submitted', 'rejected')">
                     <field name="rejection_reason"/>
+                </group>
+                <group invisible="approval_state not in ('approved', 'cancelled')"
+                       groups="eventflow_management.group_eventflow_manager">
+                    <field name="cancel_reason" readonly="approval_state == 'cancelled'"/>
                 </group>
                 <group string="Attendance" invisible="approval_state != 'approved'">
                     <field name="seats_taken"/>

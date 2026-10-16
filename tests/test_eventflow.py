@@ -205,3 +205,29 @@ class TestEventFlow(TransactionCase):
         self.assertEqual(listed.mapped('name'), ['Amy', 'Zed'])
         self.assertNotIn(cancelled, listed)
         self.assertIn(zed, listed)
+
+    def test_cancel_event_cancels_registrations(self):
+        Registration = self.env['event.registration']
+        self.event.with_context(eventflow_action=True).write(
+            {'approval_state': 'approved'}
+        )
+        reg = Registration.create({
+            'event_id': self.event.id, 'name': 'Alice', 'email': 'alice@example.com',
+        })
+
+        with self.assertRaises(AccessError):
+            self.event.with_user(self.staff).action_cancel_event()
+        with self.assertRaises(UserError):
+            self.event.with_user(self.manager).action_cancel_event()
+
+        self.event.cancel_reason = 'Venue unavailable'
+        self.event.with_user(self.manager).action_cancel_event()
+        self.assertEqual(self.event.approval_state, 'cancelled')
+        self.assertEqual(reg.state, 'cancel')
+
+        with self.assertRaises(UserError):
+            Registration.create({
+                'event_id': self.event.id, 'name': 'Bob', 'email': 'bob@example.com',
+            })
+        with self.assertRaises(UserError):
+            self.event.with_user(self.manager).action_reset_draft()

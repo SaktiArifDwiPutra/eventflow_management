@@ -15,6 +15,7 @@ class EventEvent(models.Model):
             ('submitted', 'Submitted'),
             ('approved', 'Approved'),
             ('rejected', 'Rejected'),
+            ('cancelled', 'Cancelled'),
         ],
         string='Approval Status',
         default='draft',
@@ -23,6 +24,7 @@ class EventEvent(models.Model):
         tracking=True,
     )
     rejection_reason = fields.Text(copy=False)
+    cancel_reason = fields.Text(copy=False)
     submitted_by = fields.Many2one('res.users', readonly=True, copy=False)
     approved_by = fields.Many2one('res.users', readonly=True, copy=False)
     approved_date = fields.Datetime(readonly=True, copy=False)
@@ -49,7 +51,7 @@ class EventEvent(models.Model):
             rate = attended / taken if taken else 0.0
             event.attendance_rate = rate
             event.attendance_percent = rate * 100
-            
+
     def _get_attendance_list_registrations(self):
         self.ensure_one()
         return self.registration_ids.filtered(
@@ -137,8 +139,27 @@ class EventEvent(models.Model):
                 reason=event.rejection_reason,
             ))
 
+    def action_cancel_event(self):
+        self._check_eventflow_group('eventflow_management.group_eventflow_manager')
+        if any(event.approval_state != 'approved' for event in self):
+            raise UserError(_("Only approved events can be cancelled."))
+        if any(not event.cancel_reason for event in self):
+            raise UserError(_("Please fill in the cancellation reason before cancelling."))
+        self.with_context(eventflow_action=True).write({'approval_state': 'cancelled'})
+        for event in self:
+            event.registration_ids.filtered(
+                lambda r: r.state in ('draft', 'open')
+            ).action_cancel()
+            event._notify_submitter(_(
+                "Your event was cancelled by %(user)s. Reason: %(reason)s",
+                user=self.env.user.name,
+                reason=event.cancel_reason,
+            ))
+
     def action_reset_draft(self):
         self._check_eventflow_group('eventflow_management.group_eventflow_staff')
+        if any(event.approval_state == 'cancelled' for event in self):
+            raise UserError(_("Cancelled events cannot be reset to draft."))
         is_manager = self.env.user.has_group('eventflow_management.group_eventflow_manager')
         if not is_manager and any(event.approval_state != 'rejected' for event in self):
             raise AccessError(_("Only Event Managers can reset events that are not rejected."))
