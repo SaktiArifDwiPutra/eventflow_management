@@ -64,6 +64,8 @@
                         domain="[('approval_state', '=', 'submitted')]"/>
                 <filter string="Approved" name="filter_approved"
                         domain="[('approval_state', '=', 'approved')]"/>
+                <filter string="Cancelled" name="filter_cancelled"
+                        domain="[('approval_state', '=', 'cancelled')]"/>
                 <separator/>
             </xpath>
             <xpath expr="//filter[@name='stage_id']" position="after">
@@ -81,7 +83,8 @@
                 <field name="approval_state" widget="badge"
                        decoration-success="approval_state == 'approved'"
                        decoration-info="approval_state == 'submitted'"
-                       decoration-danger="approval_state == 'rejected'"/>
+                       decoration-danger="approval_state == 'rejected'"
+                       decoration-warning="approval_state == 'cancelled'"/>
                 <field name="seats_taken" string="Participants"/>
                 <field name="seats_used" string="Attended"/>
                 <field name="attendance_rate" widget="percentage" optional="show"/>
