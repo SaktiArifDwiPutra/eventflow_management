@@ -3,7 +3,7 @@ from odoo.exceptions import AccessError, UserError
 
 APPROVAL_FIELDS = {'approval_state', 'approved_by', 'approved_date'}
 LOCKED_FIELDS = {'name', 'date_begin', 'date_end', 'seats_max', 'seats_limited'}
-
+APPROVAL_ACTIVITY_SUMMARY = 'Approval needed'
 
 class EventEvent(models.Model):
     _inherit = 'event.event'
@@ -65,9 +65,30 @@ class EventEvent(models.Model):
         if not self.env.user.has_group(group_xmlid):
             raise AccessError(_("You do not have the rights to perform this action."))
 
+    def _eventflow_managers(self):
+        users = self.env['res.users'].search([('share', '=', False)])
+        return users.filtered(
+            lambda u: u.has_group('eventflow_management.group_eventflow_manager')
+        )
+
+    def _close_approval_activities(self, feedback):
+        activities = self.activity_ids.filtered(
+            lambda a: a.summary == APPROVAL_ACTIVITY_SUMMARY
+        )
+        activities.action_feedback(feedback=feedback)
+
     def action_submit(self):
         self._check_eventflow_group('eventflow_management.group_eventflow_staff')
         self.with_context(eventflow_action=True).write({'approval_state': 'submitted'})
+        managers = self._eventflow_managers()
+        for event in self:
+            for manager in managers:
+                event.activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    user_id=manager.id,
+                    summary=APPROVAL_ACTIVITY_SUMMARY,
+                    note=_("This event was submitted and is waiting for your approval."),
+                )
 
     def action_approve(self):
         self._check_eventflow_group('eventflow_management.group_eventflow_manager')
@@ -76,12 +97,14 @@ class EventEvent(models.Model):
             'approved_by': self.env.user.id,
             'approved_date': fields.Datetime.now(),
         })
+        self._close_approval_activities(_("Approved"))
 
     def action_reject(self):
         self._check_eventflow_group('eventflow_management.group_eventflow_manager')
         if any(not event.rejection_reason for event in self):
             raise UserError(_("Please fill in the rejection reason before rejecting."))
         self.with_context(eventflow_action=True).write({'approval_state': 'rejected'})
+        self._close_approval_activities(_("Rejected"))
 
     def action_reset_draft(self):
         self._check_eventflow_group('eventflow_management.group_eventflow_staff')

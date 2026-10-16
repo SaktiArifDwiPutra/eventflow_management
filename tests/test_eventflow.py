@@ -89,3 +89,14 @@ class TestEventFlow(TransactionCase):
         self.event.with_user(self.manager).action_reset_draft()
         self.event.write({'name': 'Renamed after reset'})
         self.assertEqual(self.event.name, 'Renamed after reset')
+
+    def test_submit_creates_manager_activity_and_approve_closes_it(self):
+        def manager_activities():
+            return self.event.activity_ids.filtered(
+                lambda a: a.user_id == self.manager and a.summary == 'Approval needed'
+            )
+
+        self.event.with_user(self.staff).action_submit()
+        self.assertEqual(len(manager_activities()), 1)
+        self.event.with_user(self.manager).action_approve()
+        self.assertFalse(manager_activities())
