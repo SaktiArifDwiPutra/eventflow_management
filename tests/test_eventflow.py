@@ -100,3 +100,22 @@ class TestEventFlow(TransactionCase):
         self.assertEqual(len(manager_activities()), 1)
         self.event.with_user(self.manager).action_approve()
         self.assertFalse(manager_activities())
+
+    def test_submitter_notified_on_reject_and_approve(self):
+        self.event.with_user(self.staff).action_submit()
+        self.assertEqual(self.event.submitted_by, self.staff)
+
+        self.event.rejection_reason = 'Needs more detail'
+        self.event.with_user(self.manager).action_reject()
+        notified = self.event.message_ids.filtered(
+            lambda m: self.staff.partner_id in m.partner_ids
+        )
+        self.assertTrue(any('Needs more detail' in (m.body or '') for m in notified))
+
+        self.event.with_user(self.staff).action_reset_draft()
+        self.event.with_user(self.staff).action_submit()
+        self.event.with_user(self.manager).action_approve()
+        notified = self.event.message_ids.filtered(
+            lambda m: self.staff.partner_id in m.partner_ids
+        )
+        self.assertTrue(any('approved' in (m.body or '') for m in notified))
