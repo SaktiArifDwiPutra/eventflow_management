@@ -16,7 +16,7 @@
         <field name="arch" type="xml">
             <pivot string="Events by Approval Status">
                 <field name="approval_state" type="row"/>
-                <field name="seats_taken" type="measure"/>
+                <field name="attendance_percent" type="measure"/>
             </pivot>
         </field>
     </record>

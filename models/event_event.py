@@ -29,6 +29,13 @@ class EventEvent(models.Model):
         store=True,
         aggregator='avg',
     )
+    attendance_percent = fields.Float(
+        string='Attendance (%)',
+        compute='_compute_attendance_rate',
+        store=True,
+        digits=(16, 0),
+        aggregator='avg',
+    )
 
     @api.depends('registration_ids.state')
     def _compute_attendance_rate(self):
@@ -36,7 +43,9 @@ class EventEvent(models.Model):
             registrations = event.registration_ids
             taken = len(registrations.filtered(lambda r: r.state in ('open', 'done')))
             attended = len(registrations.filtered(lambda r: r.state == 'done'))
-            event.attendance_rate = attended / taken if taken else 0.0
+            rate = attended / taken if taken else 0.0
+            event.attendance_rate = rate
+            event.attendance_percent = rate * 100
 
     def write(self, vals):
         if APPROVAL_FIELDS & set(vals) and not self.env.context.get('eventflow_action'):
