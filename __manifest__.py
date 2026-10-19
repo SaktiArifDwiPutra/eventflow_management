@@ -14,6 +14,7 @@
                 'views/eventflow_menus.xml',
                 'views/eventflow_reports.xml',
                 'report/event_attendance_report.xml',
+                'report/event_ticket_template.xml',
                 'data/eventflow_cron.xml',
             ],
     'application': True,

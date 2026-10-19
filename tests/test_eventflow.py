@@ -276,3 +276,21 @@ class TestEventFlow(TransactionCase):
         self.event.cancel_reason = 'Venue unavailable'
         self.event.with_user(self.manager).action_cancel_event()
         self.assertFalse(self.event.is_published)
+
+    def test_ticket_template_renders_attendee_details(self):
+        self.event.with_context(eventflow_action=True).write(
+            {'approval_state': 'approved'}
+        )
+        registration = self.env['event.registration'].create({
+            'event_id': self.event.id,
+            'name': 'Alice Wonder',
+            'email': 'alice@example.com',
+        })
+        html = self.env['ir.actions.report'].sudo()._render_qweb_html(
+            'event.action_report_event_registration_full_page_ticket',
+            registration.ids,
+        )[0].decode()
+        self.assertIn('ef-ticket', html)
+        self.assertIn('Alice Wonder', html)
+        self.assertIn('Test Event', html)
+        self.assertIn('/report/barcode/QR/', html)

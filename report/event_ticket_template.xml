@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="event_report_template_full_page_ticket_inherit"
+              inherit_id="event.event_report_template_full_page_ticket">
+        <xpath expr="//div[hasclass('o_event_full_page_ticket_wrapper')]" position="replace">
+            <div class="ef-ticket w-100">
+                <style>
+                    .ef-ticket { font-family: Arial, Helvetica, sans-serif; color: #1f2937; }
+                    .ef-ticket .ef-header { background: #1e3a8a; color: #ffffff; padding: 36px 44px 30px 44px; }
+                    .ef-ticket .ef-kicker { font-size: 12px; letter-spacing: 3px; color: #bfdbfe; margin-bottom: 10px; }
+                    .ef-ticket .ef-event-name { font-size: 34px; font-weight: bold; line-height: 1.15; }
+                    .ef-ticket .ef-body { padding: 34px 44px 6px 44px; }
+                    .ef-ticket table.ef-main { width: 100%; border-collapse: collapse; }
+                    .ef-ticket td.ef-main-left { vertical-align: top; padding-right: 30px; }
+                    .ef-ticket td.ef-main-right { width: 210px; vertical-align: top; text-align: center; }
+                    .ef-ticket .ef-type { display: inline-block; background: #dbeafe; color: #1e3a8a; font-size: 12px; font-weight: bold; padding: 4px 14px; border-radius: 12px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; }
+                    .ef-ticket .ef-attendee { font-size: 28px; font-weight: bold; line-height: 1.2; }
+                    .ef-ticket .ef-label { font-size: 10px; color: #6b7280; letter-spacing: 2px; text-transform: uppercase; margin-top: 24px; margin-bottom: 5px; }
+                    .ef-ticket .ef-value { font-size: 15px; line-height: 1.5; }
+                    .ef-ticket .ef-qr-box { border: 2px solid #1e3a8a; padding: 12px; }
+                    .ef-ticket .ef-code { font-size: 10px; color: #6b7280; margin-top: 8px; letter-spacing: 1px; word-break: break-all; }
+                    .ef-ticket .ef-tear { border-top: 2px dashed #9ca3af; margin: 30px 44px 0 44px; }
+                    .ef-ticket .ef-instructions { padding: 22px 44px 10px 44px; font-size: 12px; color: #4b5563; line-height: 1.55; }
+                    .ef-ticket .ef-instructions-title { font-size: 11px; letter-spacing: 2px; color: #1e3a8a; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; }
+                    .ef-ticket .ef-download { text-align: center; padding: 14px; }
+                    .o_event_full_page_ticket_powered_by { background: #1e3a8a !important; }
+                </style>
+
+                <t t-set="ef_code" t-value="attendee.barcode if attendee and attendee.barcode else '12345678901234567890'"/>
+
+                <div t-if="responsive_html" class="ef-download">
+                    <a class="btn btn-primary" title="Download Tickets" t-attf-href="/event/{{ event.id }}/my_tickets?registration_ids={{ attendee.ids }}&amp;tickets_hash={{ event._get_tickets_access_hash(attendee.ids)}}">
+                        Download Tickets
+                    </a>
+                </div>
+
+                <div class="ef-header">
+                    <div class="ef-kicker">E-TICKET</div>
+                    <div class="ef-event-name" t-field="event.name"/>
+                </div>
+
+                <div class="ef-body">
+                    <table class="ef-main">
+                        <tr>
+                            <td class="ef-main-left">
+                                <div t-if="attendee and attendee.event_ticket_id" class="ef-type" t-field="attendee.event_ticket_id.name"/>
+                                <div class="ef-attendee" t-if="attendee" t-field="attendee.name"/>
+                                <div class="ef-attendee" t-else="">John Doe</div>
+
+                                <div class="ef-label">Date &amp; Time</div>
+                                <div t-if="attendee" class="ef-value">
+                                    <span t-field="attendee.event_begin_date" class="text-nowrap"
+                                        t-options='{"widget": "datetime", "tz_name": event.date_tz, "format": "short"}'/><br/>
+                                    <span>to </span><span t-field="attendee.event_end_date" class="text-nowrap"
+                                        t-options='{"widget": "datetime", "tz_name": event.date_tz, "format": "short"}'/>
+                                </div>
+                                <div t-elif="event.is_one_day" class="ef-value">
+                                    <span t-field="event.date_begin" class="text-nowrap"
+                                        t-options='{"widget": "datetime", "date_only": True, "tz_name": event.date_tz}'/><br/>
+                                    <span>from </span><span t-field="event.date_begin" class="text-nowrap"
+                                        t-options='{"widget": "datetime", "time_only": True, "hide_seconds": True, "tz_name": event.date_tz, "format": "short"}'/>
+                                    <span> to </span><span t-field="event.date_end" class="text-nowrap"
+                                        t-options='{"widget": "datetime", "time_only": True, "hide_seconds": True, "tz_name": event.date_tz, "format": "short"}'/>
+                                </div>
+                                <div t-else="" class="ef-value">
+                                    <span t-field="event.date_begin" class="text-nowrap"
+                                        t-options='{"widget": "datetime", "tz_name": event.date_tz, "format": "short"}'/><br/>
+                                    <span>to </span><span t-field="event.date_end" class="text-nowrap"
+                                        t-options='{"widget": "datetime", "tz_name": event.date_tz, "format": "short"}'/>
+                                </div>
+
+                                <div class="ef-label">Location</div>
+                                <div t-if="event.address_id" class="ef-value">
+                                    <t t-call="event.event_report_template_formatted_event_address" multi_line_address="True"/>
+                                </div>
+                                <div t-else="" class="ef-value">Online event</div>
+
+                                <t t-if="attendee and attendee.sale_order_id">
+                                    <div class="ef-label">Order</div>
+                                    <div class="ef-value" t-field="attendee.sale_order_id.name"/>
+                                </t>
+                            </td>
+                            <td class="ef-main-right">
+                                <div class="ef-qr-box">
+                                    <img t-attf-src="/report/barcode/QR/{{ ef_code }}?&amp;width=170&amp;height=170&amp;quiet=0" alt="QR Code"/>
+                                </div>
+                                <div class="ef-code" t-out="ef_code"/>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="ef-tear"/>
+
+                <div t-if="not responsive_html and event.ticket_instructions" class="ef-instructions">
+                    <div class="ef-instructions-title">Important information</div>
+                    <div t-field="event.ticket_instructions"/>
+                </div>
+            </div>
+        </xpath>
+    </template>
+</odoo>
